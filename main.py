@@ -35,7 +35,7 @@ def get_text(soup_obj: BeautifulSoup) -> str:
 
 def main():
     colorama_init(autoreset=True)
-
+    
     wikipedia_url = "wikipedia.org"
     url_check_patten = re.compile(rf"https://(.+?)\.{wikipedia_url}/wiki/(.+?)")
 
