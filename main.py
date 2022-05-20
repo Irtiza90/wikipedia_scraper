@@ -1,17 +1,12 @@
 import re
+from random import randint
+
 import requests
 from bs4 import BeautifulSoup, SoupStrainer
-from random import randint
+from colorama import Fore, init as colorama_init
 
 
 strip_pattern = re.compile(r"[^\S]([ ]{2,})")
-
-
-def fetch_webpage(url: str) -> BeautifulSoup:
-    webpage = requests.get(url)
-    webpage.raise_for_status()
-
-    return BeautifulSoup(webpage.content, "html.parser", parse_only=SoupStrainer("div", class_="mw-parser-output"))
 
 
 def get_text(soup_obj: BeautifulSoup) -> str:
@@ -24,7 +19,7 @@ def get_text(soup_obj: BeautifulSoup) -> str:
     for element in soup_obj.find_all("p"):
         el_text = element.text.replace('\n', '')
 
-        if el_text.strip() == "": continue
+        if not el_text.strip(): continue
 
         el_text = re.sub(r"\[\d*\]", "", el_text)
         paragraph = strip_pattern.sub(" ", el_text)
@@ -39,8 +34,6 @@ def get_text(soup_obj: BeautifulSoup) -> str:
 
 
 def main():
-    from colorama import Fore, init as colorama_init
-
     colorama_init(autoreset=True)
 
     wikipedia_url = "wikipedia.org"
@@ -70,17 +63,21 @@ def main():
 
         else:
             # if url was valid
-            try:
-                soup = fetch_webpage(url)
-            except requests.exceptions.RequestException as exc:
-                print(str(exc))
+            resp = requests.get(url)
+            
+            if resp.status_code != 200:
+                print(Fore.RED + "WebPage Not Found")
+                continue
+            
+            soup = BeautifulSoup(resp.content, "html.parser", parse_only=SoupStrainer("div", class_="mw-parser-output"))
+            # print(str(exc))
 
+            
+            text = get_text(soup)
+            if "may refer to" in text:
+                print(soup.get_text(strip=True))
             else:
-                text = get_text(soup)
-                if "may refer to" in text:
-                    print(soup.get_text(strip=True))
-                else:
-                    print(text)
+                print(text)
 
 
         fetch_again = input("Fetch another Url (y/n): ")
